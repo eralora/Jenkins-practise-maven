@@ -1,10 +1,28 @@
 pipeline {
     agent any
+    tools {
+        maven 'maven-3.8'
+    }
     stages {
-        stage("build"){
+        stage("build jar file"){
             steps {
                 script {
                     echo "building the application..."
+                    sh 'mvn package' 
+                }
+            }
+        }
+        stage("build docker image"){
+            steps {
+                script {
+                    echo "building the image..."
+                    withCredentials([usernamePassword(credentialsId: 'nexus-docker-repo', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+                        sh 'docker build -t 207.154.233.102:8090/my-maven-app:2.0 .'
+                        sh "echo $PASS | docker login -u $USER --password-stdin 207.154.233.102:8090"
+                        sh 'docker push 207.154.233.102:8090/my-maven-app:2.0' 
+
+                    }
+                    
                 }
             }
         }
